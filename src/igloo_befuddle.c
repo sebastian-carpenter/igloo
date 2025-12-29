@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdint.h>
 
+#ifndef DISABLE_WOLFSSL
 #ifndef WOLFSSL_USER_SETTINGS
 #include <wolfssl/options.h>
 #endif
@@ -10,6 +11,7 @@
 #include <wolfssl/wolfcrypt/hash.h>
 #include <wolfssl/wolfcrypt/blake2.h>
 #include <wolfssl/wolfcrypt/error-crypt.h>
+#endif /* !DISABLE_WOLFSSL */
 
 #include "igloo_befuddle.h"
 #include "igloo_internal.h"
@@ -626,7 +628,7 @@ int bef_sha2_256(igloo_str *p)
     int err = 1;
     (void)p;
 
-#ifndef NO_SHA256
+#if !defined(DISABLE_WOLFSSL) && !defined(NO_SHA256)
     unsigned char *digest = NULL;
 
     digest = malloc(sizeof(unsigned char) * WC_SHA256_DIGEST_SIZE);
@@ -654,7 +656,7 @@ int bef_sha2_512(igloo_str *p)
     int err = 1;
     (void)p;
 
-#ifdef WOLFSSL_SHA512
+#if !defined(DISABLE_WOLFSSL) && defined(WOLFSSL_SHA512)
     unsigned char *digest = NULL;
 
     digest = malloc(sizeof(unsigned char) * WC_SHA512_DIGEST_SIZE);
@@ -682,7 +684,8 @@ int bef_sha3_256(igloo_str *p)
     int err = 1;
     (void)p;
 
-#if defined(WOLFSSL_SHA3) && !defined(WOLFSSL_NOSHA3_256)
+#if !defined(DISABLE_WOLFSSL) && \
+        defined(WOLFSSL_SHA3) && !defined(WOLFSSL_NOSHA3_256)
     unsigned char *digest = NULL;
 
     digest = malloc(sizeof(unsigned char) * WC_SHA3_256_DIGEST_SIZE);
@@ -710,7 +713,8 @@ int bef_sha3_512(igloo_str *p)
     int err = 1;
     (void)p;
 
-#if defined(WOLFSSL_SHA3) && !defined(WOLFSSL_NOSHA3_512)
+#if !defined(DISABLE_WOLFSSL) && \
+        defined(WOLFSSL_SHA3) && !defined(WOLFSSL_NOSHA3_512)
     unsigned char *digest = NULL;
 
     digest = malloc(sizeof(unsigned char) * WC_SHA3_512_DIGEST_SIZE);
@@ -739,7 +743,7 @@ int bef_blake2b(igloo_str *p, size_t digest_size)
     (void)p;
     (void)digest_size;
 
-#ifdef HAVE_BLAKE2B
+#if !defined(DISABLE_WOLFSSL) && defined(HAVE_BLAKE2B)
     Blake2b b2b;
     unsigned char *digest = NULL;
 
@@ -772,7 +776,7 @@ int bef_blake2s(igloo_str *p, size_t digest_size)
     (void)p;
     (void)digest_size;
 
-#ifdef HAVE_BLAKE2S
+#if !defined(DISABLE_WOLFSSL) && defined(HAVE_BLAKE2S)
     Blake2s b2s;
     unsigned char *digest = NULL;
 
@@ -805,7 +809,8 @@ int bef_shake128(igloo_str *p, size_t digest_size)
     (void)p;
     (void)digest_size;
 
-#if defined(WOLFSSL_SHA3) && defined(WOLFSSL_SHAKE128)
+#if !defined(DISABLE_WOLFSSL) && \
+        defined(WOLFSSL_SHA3) && defined(WOLFSSL_SHAKE128)
     unsigned char *digest = NULL;
 
     digest = malloc(sizeof(unsigned char) * digest_size);
@@ -833,7 +838,8 @@ int bef_shake256(igloo_str *p, size_t digest_size)
     (void)p;
     (void)digest_size;
 
-#if defined(WOLFSSL_SHA3) && defined(WOLFSSL_SHAKE256)
+#if !defined(DISABLE_WOLFSSL) && \
+        defined(WOLFSSL_SHA3) && defined(WOLFSSL_SHAKE256)
     unsigned char *digest = NULL;
 
     digest = malloc(sizeof(unsigned char) * digest_size);
