@@ -48,7 +48,7 @@ should be a good indicator if things are working correctly.
 Building igloo requires:
 
 * autotools: autoreconf, autoconf, automake, libtool
-* wolfSSL
+* wolfSSL (can be disabled, see [Installing igloo])
 
 ## Installing wolfSSL
 
@@ -95,6 +95,13 @@ make
 ./setup.sh
 ./test.sh
 sudo make install
+```
+
+If wolfSSL is not desired (which will remove all hashing capability), then it
+can be disabled with `--disable-wolfssl` when configuring.
+
+```
+./configure --disable-wolfssl
 ```
 
 `setup.sh` will create ~/.igloo/ for storing a user's profiles. As well as
