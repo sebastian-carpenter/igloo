@@ -16,19 +16,19 @@ static void list_befuddle(void)
 {
     printf("%-80s\n", "standard befuddles:");
     PRINT_TWO_COL("cat", "MIXED STRING", "salt", "MIXED");
-    PRINT_TWO_COL("sub", "STRING STRING SIZE_T", "cut", "SIZE_T");
+    PRINT_TWO_COL("sub", "STRING STRING SIZE_T", "cut", "INDEX");
     PRINT_TWO_COL("rev", "NONE", "xor", "STRING");
-    PRINT_TWO_COL("replace", "STRING SIZE_T", "shuffle", "SIZE_T");
+    PRINT_TWO_COL("replace", "STRING INDEX", "shuffle", "SIZE_T");
     PRINT_TWO_COL("ccipher", "INT", "rcipher", "SIZE_T");
     PRINT_ONE_COL("complement", "NONE");
     PRINT_TWO_COL("genxor", "SIZE_T", "passwordify", "SIZE_T STRING");
     printf("\n%-80s\n", "meta befuddles:");
-    PRINT_TWO_COL("fork", "NONE", "substr", "SIZE_T SIZE_T");
+    PRINT_TWO_COL("fork", "NONE", "substr", "INDEX INDEX");
     PRINT_ONE_COL("join", "NONE");
     PRINT_TWO_COL("iterate", "SIZE_T", "iterate_end", "NONE");
     printf("\n%-80s\n", "join befuddles:");
     PRINT_TWO_COL("cat", "MIXED COMMENT", "sub", "STRING COMMENT SIZE_T");
-    PRINT_TWO_COL("xor", "COMMENT", "replace", "COMMENT SIZE_T");
+    PRINT_TWO_COL("xor", "COMMENT", "replace", "COMMENT INDEX");
     printf("\n%-80s\n", "hashes:");
     PRINT_TWO_COL("sha2-256", "NONE", "sha2-512", "NONE");
     PRINT_TWO_COL("sha3-256", "NONE", "sha3-512", "NONE");
@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
             "Multiple passwords will be saved in multiple files (PATH1, PATH2,"
             " ...)", 0},
         {NULL, 'p', "NUM", 0, "Number of passwords to obscure (default is 1)", 0},
-        {"quiet", 'q', NULL, 0, "Suppress printing of error and warning messages", 0},
+        {"quiet", 'q', NULL, 0, "Suppress printing of non-password text", 0},
         {"save", 's', "PATH", 0, "Save command(s) to a file", 0},
         {"truncate", 't', "NUM", 0, "Truncate length of output password(s)", 0},
         {0}
