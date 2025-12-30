@@ -372,7 +372,7 @@ Following are all the befuddles currently in igloo.
     - Join a fork to the main password again
     - Supported methods for joining: CAT, SUB, XOR, REPLACE
         * cat MIXED COMMENT
-        * sub STRING COMMENT INDEX
+        * sub STRING COMMENT SIZE_T
         * xor COMMENT
         * replace COMMENT INDEX
     - In each case COMMENT will be ignored so anything can be written
