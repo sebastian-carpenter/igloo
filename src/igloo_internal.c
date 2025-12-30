@@ -142,7 +142,7 @@ int igloo_cmd_map_type(igloo_cmd *icmd, const char *str, size_t len)
         ret = IGLOO_CMD_SETUP(icmd, SUB, STRING, STRING, SIZE_T);
     }
     else if (IGLOO_STR_EQ(str, len, "cut")){
-        ret = IGLOO_CMD_SETUP(icmd, CUT, SIZE_T, NONE, NONE);
+        ret = IGLOO_CMD_SETUP(icmd, CUT, INDEX, NONE, NONE);
     }
     else if (IGLOO_STR_EQ(str, len, "rev")){
         ret = IGLOO_CMD_SETUP(icmd, REV, NONE, NONE, NONE);
@@ -151,7 +151,7 @@ int igloo_cmd_map_type(igloo_cmd *icmd, const char *str, size_t len)
         ret = IGLOO_CMD_SETUP(icmd, XOR, STRING, NONE, NONE);
     }
     else if (IGLOO_STR_EQ(str, len, "replace")){
-        ret = IGLOO_CMD_SETUP(icmd, REPLACE, STRING, SIZE_T, NONE);
+        ret = IGLOO_CMD_SETUP(icmd, REPLACE, STRING, INDEX, NONE);
     }
     else if (IGLOO_STR_EQ(str, len, "shuffle")){
         ret = IGLOO_CMD_SETUP(icmd, SHUFFLE, SIZE_T, NONE, NONE);
@@ -175,7 +175,7 @@ int igloo_cmd_map_type(igloo_cmd *icmd, const char *str, size_t len)
         ret = IGLOO_CMD_SETUP(icmd, FORK, NONE, NONE, NONE);
     }
     else if (IGLOO_STR_EQ(str, len, "substr")){
-        ret = IGLOO_CMD_SETUP(icmd, SUBSTR, SIZE_T, SIZE_T, NONE);
+        ret = IGLOO_CMD_SETUP(icmd, SUBSTR, INDEX, INDEX, NONE);
     }
     else if (IGLOO_STR_EQ(str, len, "join")){
         ret = IGLOO_CMD_SETUP(icmd, JOIN, STRING, NONE, NONE);
@@ -198,11 +198,11 @@ int igloo_cmd_map_type(igloo_cmd *icmd, const char *str, size_t len)
     else if (IGLOO_STR_EQ(str, len, "sha3-512")){
         ret = IGLOO_CMD_SETUP(icmd, IG_SHA3_512, NONE, NONE, NONE);
     }
-    else if (IGLOO_STR_EQ(str, len, "blake2b")){
-        ret = IGLOO_CMD_SETUP(icmd, IG_BLAKE2B, SIZE_T, NONE, NONE);
-    }
     else if (IGLOO_STR_EQ(str, len, "blake2s")){
         ret = IGLOO_CMD_SETUP(icmd, IG_BLAKE2S, SIZE_T, NONE, NONE);
+    }
+    else if (IGLOO_STR_EQ(str, len, "blake2b")){
+        ret = IGLOO_CMD_SETUP(icmd, IG_BLAKE2B, SIZE_T, NONE, NONE);
     }
     else if (IGLOO_STR_EQ(str, len, "shake128")){
         ret = IGLOO_CMD_SETUP(icmd, IG_SHAKE128, SIZE_T, NONE, NONE);
@@ -221,21 +221,21 @@ int igloo_cmd_add_arg(igloo_cmd *icmd, int arg_num, const char *str, size_t len)
 {
     int err = 0;
     unsigned char *base;
-    enum igloo_arg_type arg_t;
+    enum igloo_arg_type *arg_t;
     union igloo_arg *arg;
     char *endptr;
 
     base = (unsigned char *)icmd;
     if (arg_num == 1){
-        arg_t = *(enum igloo_arg_type *)(base + offsetof(struct igloo_cmd, arg1_t));
+        arg_t = (enum igloo_arg_type *)(base + offsetof(struct igloo_cmd, arg1_t));
         arg = (union igloo_arg *)(base + offsetof(struct igloo_cmd, arg1));
     }
     else if (arg_num == 2){
-        arg_t = *(enum igloo_arg_type *)(base + offsetof(struct igloo_cmd, arg2_t));
+        arg_t = (enum igloo_arg_type *)(base + offsetof(struct igloo_cmd, arg2_t));
         arg = (union igloo_arg *)(base + offsetof(struct igloo_cmd, arg2));
     }
     else if (arg_num == 3){
-        arg_t = *(enum igloo_arg_type *)(base + offsetof(struct igloo_cmd, arg3_t));
+        arg_t = (enum igloo_arg_type *)(base + offsetof(struct igloo_cmd, arg3_t));
         arg = (union igloo_arg *)(base + offsetof(struct igloo_cmd, arg3));
     }
     else{
@@ -243,7 +243,7 @@ int igloo_cmd_add_arg(igloo_cmd *icmd, int arg_num, const char *str, size_t len)
     }
 
     if (err == 0){
-        switch (arg_t){
+        switch (*arg_t){
         case INT:
             arg->i = strtol(str, &endptr, 10);
             err = str == endptr;
@@ -252,6 +252,15 @@ int igloo_cmd_add_arg(igloo_cmd *icmd, int arg_num, const char *str, size_t len)
         case SIZE_T:
             arg->sz = strtoul(str, &endptr, 10);
             err = str == endptr;
+            break;
+
+        case INDEX:
+            arg->sz = strtoul(str, &endptr, 10);
+            err = str == endptr;
+            if (err == 0 && *endptr == '%'){
+                *arg_t = PERCENT;
+                err = arg->sz > 100;
+            }
             break;
 
         case STRING:
@@ -276,6 +285,7 @@ int igloo_cmd_add_arg(igloo_cmd *icmd, int arg_num, const char *str, size_t len)
             }
             break;
 
+        case PERCENT:
         case NONE:
             err = 1;
             break;
@@ -298,8 +308,13 @@ static int encode_arg(FILE *st, enum igloo_cmd_type cmd_t,
             err = 1;
         }
     }
-    else if (arg_t == SIZE_T){
+    else if (arg_t == SIZE_T || arg_t == INDEX){
         if (fprintf(st, "%zu", arg.sz) <= 0){
+            err = 1;
+        }
+    }
+    else if (arg_t == PERCENT){
+        if (fprintf(st, "%zu%%", arg.sz) <= 0){
             err = 1;
         }
     }
@@ -404,11 +419,11 @@ static int encode_cmd(FILE *st, const igloo_cmd *icmd)
     case IG_SHA3_512:
         s = "sha3-512";
         break;
-    case IG_BLAKE2B:
-        s = "blake2b";
-        break;
     case IG_BLAKE2S:
         s = "blake2s";
+        break;
+    case IG_BLAKE2B:
+        s = "blake2b";
         break;
     case IG_SHAKE128:
         s = "shake128";
@@ -437,19 +452,25 @@ static int print_igloo_arg(enum igloo_cmd_type cmd_t, const union igloo_arg arg,
 
     switch (arg_t){
     case INT:
-        s = "INT   ";
+        s = "INT    ";
         break;
     case SIZE_T:
-        s = "SIZE_T";
+        s = "SIZE_T ";
+        break;
+    case INDEX:
+        s = "INDEX  ";
+        break;
+    case PERCENT:
+        s = "PERCENT";
         break;
     case STRING:
-        s = "STRING";
+        s = "STRING ";
         break;
     case MIXED:
-        s = "MIXED ";
+        s = "MIXED  ";
         break;
     case NONE:
-        s = "NONE  ";
+        s = "NONE   ";
         break;
     default:
         return 1;
@@ -548,11 +569,11 @@ int print_igloo_cmd(const igloo_cmd *icmd)
     case IG_SHA3_512:
         s = "SHA3_512";
         break;
-    case IG_BLAKE2B:
-        s = "BLAKE2B";
-        break;
     case IG_BLAKE2S:
         s = "BLAKE2S";
+        break;
+    case IG_BLAKE2B:
+        s = "BLAKE2B";
         break;
     case IG_SHAKE128:
         s = "SHAKE128";

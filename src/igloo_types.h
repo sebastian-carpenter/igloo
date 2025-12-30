@@ -34,8 +34,8 @@ enum igloo_cmd_type {
     IG_SHA2_512,
     IG_SHA3_256,
     IG_SHA3_512,
-    IG_BLAKE2B,
     IG_BLAKE2S,
+    IG_BLAKE2B,
     IG_SHAKE128,
     IG_SHAKE256,
 };
@@ -43,6 +43,8 @@ enum igloo_cmd_type {
 enum igloo_arg_type {
     INT,
     SIZE_T,
+    INDEX,
+    PERCENT,
     STRING,
     MIXED,
     NONE,

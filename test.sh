@@ -133,9 +133,15 @@ echo "save/load profile tests -----------------------------"
 TEST_NAME="save test"
 [ -f "$PWD/test_profile" ] && rm -f "$PWD/test_profile"
 [ -f output.txt          ] && rm -f output.txt
-$VALGRIND ./igloo -q -s "$PWD/test_profile" "cat front igloo" "rev" <<< "igloo"
+$VALGRIND ./igloo -q -s "$PWD/test_profile" \
+    "cat front igloo" \
+    "rev" \
+    "substr 40% 8" \
+    "ccipher 0" \
+    "rcipher 1" \
+    'join cat\ front\ SUBSTR1' <<< "igloo"
 $VALGRIND ./igloo -q -l "$PWD/test_profile" <<< "igloo" > output.txt
-check_file_error "output.txt" "oolgioolgi"
+check_file_error "output.txt" "iooloolgioolgi"
 [ -f "$PWD/test_profile" ] && rm -f "$PWD/test_profile"
 echo ""
 
@@ -198,9 +204,14 @@ verify "igloo" "cut 4" \
        "oiglo"
 echo ""
 
-TEST_NAME="cut at middle"
-verify "igloo" "cut 0" \
-       "looig"
+TEST_NAME="cut with percent (26%)"
+verify "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN" "cut 26%" \
+       "defghijklmnopqrstuvwxyzABCDEFGHIJKLMN0123456789abc"
+echo ""
+
+TEST_NAME="cut with percent (75%)"
+verify "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN" "cut 75%" \
+       "BCDEFGHIJKLMN0123456789abcdefghijklmnopqrstuvwxyzA"
 echo ""
 
 echo "REV tests -------------------------------------------"
@@ -239,6 +250,11 @@ echo ""
 TEST_NAME="replace at end"
 verify "igloo" "replace snow 5" \
        "igloosnow"
+echo ""
+
+TEST_NAME="replace from percent (58%)"
+verify "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN" "replace snow 58%" \
+       "0123456789abcdefghijklmnopqrssnowxyzABCDEFGHIJKLMN"
 echo ""
 
 echo "SHUFFLE tests ---------------------------------------"
@@ -408,6 +424,21 @@ verify "igloo" 'substr 0 5, join cat\ front\ SUBSTR1' \
        "iglooigloo"
 echo ""
 
+TEST_NAME="substr with percents (23%, 69%)"
+verify "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN" 'substr 23% 68%, join cat\ front\ SUBSTR1' \
+       "bcdefghijklmnopqrstuvwx0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN"
+echo ""
+
+TEST_NAME="substr with half percent 1 (23%, 48)"
+verify "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN" 'substr 23% 48, join cat\ front\ SUBSTR1' \
+       "bcdefghijklmnopqrstuvwxyzABCDEFGHIJKL0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN"
+echo ""
+
+TEST_NAME="substr with half percent 2 (5, 48%)"
+verify "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN" 'substr 5 48%, join cat\ front\ SUBSTR1' \
+       "56789abcdefghijklmn0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN"
+echo ""
+
 echo "JOIN tests ------------------------------------------"
 TEST_NAME="join with cat"
 verify "igloo" 'fork, join cat\ front\ FORK1' \
@@ -479,16 +510,6 @@ verify_hash "igloo" "sha3-512" \
             "f86598196d636286da077b8f9310f817f1b90a9882e3ba62039d0d2fe3a099ef3473e19d6f807eac210f03b7047c68f8c0903042d53552ee22c87b76f66a01710a"
 echo ""
 
-TEST_NAME="blake2b test (1 byte)"
-verify_hash "igloo" "blake2b 1" \
-            "9d0a"
-echo ""
-
-TEST_NAME="blake2b test (64 bytes)"
-verify_hash "igloo" "blake2b 64" \
-            "d6e46c104e35834919ab9ba83b2b7b75fc7705b44a48b8e43400a7513970b3180fef90c3c1c7bd3d2fa3c852d5155fb1c14ea3dbf31ac7e1800dd4d0ddb1be840a"
-echo ""
-
 TEST_NAME="blake2s test (1 byte)"
 verify_hash "igloo" "blake2s 1" \
             "520a"
@@ -497,6 +518,16 @@ echo ""
 TEST_NAME="blake2s test (32 bytes)"
 verify_hash "igloo" "blake2s 32" \
             "173e7f73fa204f2bf6ad0588403f608f7231d578a21e1b3e63ef1be37ceb2f6f0a"
+echo ""
+
+TEST_NAME="blake2b test (1 byte)"
+verify_hash "igloo" "blake2b 1" \
+            "9d0a"
+echo ""
+
+TEST_NAME="blake2b test (64 bytes)"
+verify_hash "igloo" "blake2b 64" \
+            "d6e46c104e35834919ab9ba83b2b7b75fc7705b44a48b8e43400a7513970b3180fef90c3c1c7bd3d2fa3c852d5155fb1c14ea3dbf31ac7e1800dd4d0ddb1be840a"
 echo ""
 
 TEST_NAME="shake128 test (1 byte)"

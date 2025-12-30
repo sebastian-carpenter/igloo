@@ -85,10 +85,10 @@ int bef_sha2_512(igloo_str *p);
 int bef_sha3_256(igloo_str *p);
 int bef_sha3_512(igloo_str *p);
 
-/* up to 64 byte digest */
-int bef_blake2b(igloo_str *p, size_t digest_size);
 /* up to 32 byte digest */
 int bef_blake2s(igloo_str *p, size_t digest_size);
+/* up to 64 byte digest */
+int bef_blake2b(igloo_str *p, size_t digest_size);
 
 /* digests with no limit on output size (technically 32 bit limit though) */
 int bef_shake128(igloo_str *p, size_t digest_size);

@@ -60,8 +60,8 @@ Then follow these steps:
 ```
 cd wolfssl
 ./autogen.sh
-./configure --enable-sha256 --enable-sha512 --enable-sha3 --enable-blake2 \
-        --enable-blake2s --enable-shake128 --enable-shake256
+./configure --enable-sha256 --enable-sha512 --enable-sha3 --enable-blake2s \
+        --enable-blake2 --enable-shake128 --enable-shake256
 make
 sudo make install
 ```
@@ -97,8 +97,8 @@ make
 sudo make install
 ```
 
-If wolfSSL is not desired (which will remove all hashing capability), then it
-can be disabled with `--disable-wolfssl` when configuring.
+If wolfSSL is not desired then it can be disabled with `--disable-wolfssl` when
+configuring (which will remove all hashing capability).
 
 ```
 ./configure --disable-wolfssl
@@ -208,8 +208,9 @@ $ cat my_pass
 Note that when outputting an obscured password to stdout (no `-o` flag) a
 newline will always be appended, whereas with `-o` no newline will be appended.
 
-If multiple passwords are obscured and -o is given then multiple files will be
-written to. Each file will be suffixed with a number corresponding their order.
+If multiple passwords are obscured and `-o` is given then multiple files will be
+written to. Each file will be suffixed with a number corresponding to their
+order.
 
 ```
 $ igloo -o my_pass -p 2
@@ -315,10 +316,17 @@ These befuddles are various algorithms available to the user for obscuring a
 password.
 
 A befuddle may accept betwwen 0 and 3 arguments (currently). Each argument has a
-type associated with it, these types are: INT, SIZE_T, STRING, MIXED, and NONE.
-An INT type is some signed number whereas SIZE_T is unsigned. STRING is just a
-set of characters. MIXED depends on the befuddle in question. And NONE describes
-no argument.
+type associated with it, these types are: INT, SIZE_T, INDEX, PERCENT, STRING,
+MIXED, and NONE.
+
+* INT is some signed number
+* SIZE_T is some unsigned number
+* INDEX is an alias for SIZE_T, it can be converted to a PERCENT type
+    - PERCENT is created when an INDEX arg is given an integer suffixed with a
+    percent symbol (i.e., `substr 25% 75%` or `cut 53%`)
+* STRING is just an array of characters
+* MIXED depends on the befuddle in question
+* NONE describes no argument
 
 Following are all the befuddles currently in igloo.
 
@@ -331,15 +339,14 @@ Following are all the befuddles currently in igloo.
     - Similar to cat except STRING is read from stdin
 * sub STRING STRING SIZE_T
     - Substitute string1 with string2 up to SIZE_T times (0 is unbounded)
-* cut SIZE_T
-    - Split the password into two sections at index SIZE_T and swap both
-    sections
+* cut INDEX
+    - Split the password into two sections at INDEX then swap both sections
 * rev
     - Reverse the password
 * xor STRING
     - Perform an xor operation on the password using STRING
-* replace STRING SIZE_T
-    - Replace characters starting at index SIZE_T with STRING
+* replace STRING INDEX
+    - Replace characters starting at INDEX with STRING
 * shuffle SIZE_T
     - Shuffle each character in the password like a deck of cards
 * ccipher INT
@@ -359,15 +366,15 @@ Following are all the befuddles currently in igloo.
 
 * fork
     - Operate on a duplicate password which must later be joined
-* substr SIZE_T SIZE_T
-    - Fork a portion of the password from index SIZE_T to a second index SIZE_T
+* substr INDEX INDEX
+    - Fork a portion of the password from the first INDEX to the second INDEX
 * join
     - Join a fork to the main password again
     - Supported methods for joining: CAT, SUB, XOR, REPLACE
         * cat MIXED COMMENT
-        * sub STRING COMMENT SIZE_T
+        * sub STRING COMMENT INDEX
         * xor COMMENT
-        * replace COMMENT SIZE_T
+        * replace COMMENT INDEX
     - In each case COMMENT will be ignored so anything can be written
     - See [Join Examples]
 * iterate SIZE_T
@@ -385,10 +392,10 @@ Following are all the befuddles currently in igloo.
     - 32 byte hash
 * sha3-512
     - 64 byte hash
-* blake2b SIZE_T
-    - Up to 64 byte hash, SIZE_T selects the digest size
 * blake2s SIZE_T
     - Up to 32 byte hash, SIZE_T selects the digest size
+* blake2b SIZE_T
+    - Up to 64 byte hash, SIZE_T selects the digest size
 * shake128 SIZE_T
     - Unrestricted digest size, SIZE_T selects the digest size
 * shake256 SIZE_T
@@ -400,9 +407,9 @@ Four types of joins are currently supported, these being CAT, SUB, XOR, and
 REPLACE. They expect the following arguments:
 
 * cat MIXED COMMENT
-* sub STRING COMMENT SIZE_T
+* sub STRING COMMENT INDEX
 * xor COMMENT
-* replace COMMENT SIZE_T
+* replace COMMENT INDEX
 
 COMMENT is not a type recognized by the igloo parser. It exists as a
 consequence of parsing being reused for the JOIN logic. Consequently, each
@@ -414,7 +421,7 @@ would normally be expected.
 A few examples should make things a bit clearer.
 
 ```
-igloo fork "join cat\ front\ FORK1"
+igloo fork 'join cat\ front\ FORK1'
 ```
 
 This duplicates the password and then immediately concatenates it to the front
@@ -428,7 +435,7 @@ that 'cat' and 'front' tell it to concatenate the forked password to the front
 of the password it was duplicated from.
 
 ```
-igloo fork "join sub\ a\ FORK1\ 0"
+igloo fork 'join sub\ a\ FORK1\ 0'
 ```
 
 Duplicate the password and then immediately JOIN it into the password it was
@@ -436,7 +443,7 @@ duplicated from. JOIN it by replacing each instance of 'a' in the original
 password with the duplicated password.
 
 ```
-igloo fork "join xor\ FORK1"
+igloo fork 'join xor\ FORK1'
 ```
 
 Duplicate the password and then immediately JOIN it into the password it was
@@ -444,7 +451,7 @@ duplicated from. JOIN it by xor'ing the original password with the duplicated
 password. (This will zero out the password)
 
 ```
-igloo fork "join replace\ FORK1\ 1"
+igloo fork 'join replace\ FORK1\ 1'
 ```
 
 Duplicate the password and then immediately JOIN it into the password it was
@@ -483,4 +490,4 @@ iterate_end
 ```
 
 Now this will be done 10 times. Be careful! With a password of length 5 the
-obscured password was 295246 characters long. A growth rate of roughly 3.6^N.
+obscured password was 295246 characters long. A growth rate of 5 * 3^N.

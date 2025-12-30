@@ -18,20 +18,22 @@ static void list_befuddle(void)
     PRINT_TWO_COL("cat", "MIXED STRING", "salt", "MIXED");
     PRINT_TWO_COL("sub", "STRING STRING SIZE_T", "cut", "SIZE_T");
     PRINT_TWO_COL("rev", "NONE", "xor", "STRING");
-    PRINT_TWO_COL("replace", "STRING SIZE_T", "shuffle", "INT");
-    PRINT_TWO_COL("bshuffle", "INT INT", "ccipher", "INT");
-    PRINT_TWO_COL("rcipher", "INT", "complement", "NONE");
+    PRINT_TWO_COL("replace", "STRING SIZE_T", "shuffle", "SIZE_T");
+    PRINT_TWO_COL("ccipher", "INT", "rcipher", "SIZE_T");
+    PRINT_ONE_COL("complement", "NONE");
     PRINT_TWO_COL("genxor", "SIZE_T", "passwordify", "SIZE_T STRING");
     printf("\n%-80s\n", "meta befuddles:");
     PRINT_TWO_COL("fork", "NONE", "substr", "SIZE_T SIZE_T");
     PRINT_ONE_COL("join", "NONE");
+    PRINT_TWO_COL("iterate", "SIZE_T", "iterate_end", "NONE");
     printf("\n%-80s\n", "join befuddles:");
     PRINT_TWO_COL("cat", "MIXED COMMENT", "sub", "STRING COMMENT SIZE_T");
     PRINT_TWO_COL("xor", "COMMENT", "replace", "COMMENT SIZE_T");
-    printf("\n%-80s\n", "wolfssl befuddles:");
+    printf("\n%-80s\n", "hashes:");
     PRINT_TWO_COL("sha2-256", "NONE", "sha2-512", "NONE");
     PRINT_TWO_COL("sha3-256", "NONE", "sha3-512", "NONE");
-    PRINT_TWO_COL("blake2b", "NONE", "blake2s", "NONE");
+    PRINT_TWO_COL("blake2b", "SIZE_T", "blake2s", "SIZE_T");
+    PRINT_TWO_COL("shake128", "SIZE_T", "shake256", "SIZE_T");
 }
 
 static int parse_opt(int key, char *arg, struct argp_state *state)
