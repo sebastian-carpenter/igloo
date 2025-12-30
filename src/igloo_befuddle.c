@@ -18,11 +18,37 @@
 #include "igloo_parser.h"
 #include "igloo_random.h"
 
-static void clear_free(void *ptr, size_t len){
+static void clear_free(void *ptr, size_t len)
+{
     if (ptr != NULL){
         explicit_bzero(ptr, len);
         free(ptr);
     }
+}
+
+static int convert_percent(enum igloo_arg_type arg_t, size_t *sz, igloo_str *p)
+{
+    int err = 0;
+
+    if (arg_t == PERCENT){
+        if (p->len > ((size_t)-1) / 100){
+            err = 1;
+        }
+        else{
+            *sz = p->len * *sz / 100;
+        }
+    }
+
+    return err;
+}
+
+static int convert_percents(igloo_cmd *icmd, igloo_str *p)
+{
+    int err = 0;
+    err |= convert_percent(icmd->arg1_t, &icmd->arg1.sz, p);
+    err |= convert_percent(icmd->arg2_t, &icmd->arg2.sz, p);
+    err |= convert_percent(icmd->arg3_t, &icmd->arg3.sz, p);
+    return err;
 }
 
 int igloo_befuddle(igloo *ig)
@@ -43,6 +69,11 @@ int igloo_befuddle(igloo *ig)
     }
 
     while(err == 0 && cmd_ind < ig->cmds.used){
+        err = convert_percents(icmd, pass);
+        if (err != 0){
+            break;
+        }
+
         switch (icmd->cmd_t){
         case CAT:
             err = bef_cat(pass, icmd->arg1.i, icmd->arg2.istr);
@@ -253,11 +284,8 @@ int bef_cut(igloo_str *p, size_t x)
     int err;
     unsigned char *tmp;
 
-    err = x >= p->len;
+    err = x > p->len;
     if (err == 0){
-        if (x == 0){
-            x = p->len / 2;
-        }
         tmp = malloc(sizeof(unsigned char) * x);
         err = tmp == NULL;
     }
@@ -737,22 +765,22 @@ int bef_sha3_512(igloo_str *p)
     return err;
 }
 
-int bef_blake2b(igloo_str *p, size_t digest_size)
+int bef_blake2s(igloo_str *p, size_t digest_size)
 {
     int err = 1;
     (void)p;
     (void)digest_size;
 
-#if !defined(DISABLE_WOLFSSL) && defined(HAVE_BLAKE2B)
-    Blake2b b2b;
+#if !defined(DISABLE_WOLFSSL) && defined(HAVE_BLAKE2S)
+    Blake2s b2s;
     unsigned char *digest = NULL;
 
     if((digest = malloc(sizeof(unsigned char) * digest_size)) == NULL){
         err = 1;
     }
-    else if (wc_InitBlake2b(&b2b, digest_size) != 0 ||
-             wc_Blake2bUpdate(&b2b, p->str, p->len) != 0 ||
-             wc_Blake2bFinal(&b2b, digest, 0) != 0){
+    else if (wc_InitBlake2s(&b2s, digest_size) != 0 ||
+             wc_Blake2sUpdate(&b2s, p->str, p->len) != 0 ||
+             wc_Blake2sFinal(&b2s, digest, 0) != 0){
         err = 1;
     }
     else{
@@ -770,22 +798,22 @@ int bef_blake2b(igloo_str *p, size_t digest_size)
     return err;
 }
 
-int bef_blake2s(igloo_str *p, size_t digest_size)
+int bef_blake2b(igloo_str *p, size_t digest_size)
 {
     int err = 1;
     (void)p;
     (void)digest_size;
 
-#if !defined(DISABLE_WOLFSSL) && defined(HAVE_BLAKE2S)
-    Blake2s b2s;
+#if !defined(DISABLE_WOLFSSL) && defined(HAVE_BLAKE2B)
+    Blake2b b2b;
     unsigned char *digest = NULL;
 
     if((digest = malloc(sizeof(unsigned char) * digest_size)) == NULL){
         err = 1;
     }
-    else if (wc_InitBlake2s(&b2s, digest_size) != 0 ||
-             wc_Blake2sUpdate(&b2s, p->str, p->len) != 0 ||
-             wc_Blake2sFinal(&b2s, digest, 0) != 0){
+    else if (wc_InitBlake2b(&b2b, digest_size) != 0 ||
+             wc_Blake2bUpdate(&b2b, p->str, p->len) != 0 ||
+             wc_Blake2bFinal(&b2b, digest, 0) != 0){
         err = 1;
     }
     else{
